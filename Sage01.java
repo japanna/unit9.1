@@ -12,6 +12,7 @@ import java.awt.*;                   // Colors, Fonts, etc.
 import java.io.*;                    // File I/O
 import java.awt.event.*;             // ActionListener, etc.
 import java.util.*;                  // Scanner class
+import java.text.*;					// date
 
 public class Sage01 extends JFrame implements ActionListener
 {
@@ -20,8 +21,6 @@ public class Sage01 extends JFrame implements ActionListener
 	private JLabel prompt = // prompt
          new JLabel ("Please type your question here:", JLabel.RIGHT);
     private JTextField questionField = new JTextField (30); // nameField
-    private JButton askButton = // writeButton
-         new JButton ("Ask question");
 
     // conversation area
 	private JTextArea conversation = //display
@@ -44,13 +43,9 @@ public class Sage01 extends JFrame implements ActionListener
 
     	// question area        
     	add (questionArea, BorderLayout.NORTH);
-    	//questionArea.setLayout (new GridLayout (1, 3, 1, 1));   
     	questionArea.add (prompt);
     	questionArea.add (questionField);
-        //questionArea.add (askButton);
         questionField.addActionListener(this);
-        //askButton.addActionListener (this);
-        askButton.setForeground (Color.BLUE);
 
     	// conversation area
     	//instead of ...  add (display, BorderLayout.CENTER);
@@ -75,27 +70,64 @@ public class Sage01 extends JFrame implements ActionListener
     } 
 
 /** 
-     * displayQuestion() displays the question in the conversation field.
-	 *
-     * @param question -- a String representing user's question
-     * @param conversation -- a JTextArea where questions and answers are displayed
-     */
+ * displayQuestion() displays the question in the conversation field.
+ *
+ * @param question -- a String representing user's question
+ * @param conversation -- a JTextArea where questions and answers are displayed
+ */
     private void displayQuestion (JTextArea conversation, String question) 
     {
     	conversation.append("\n\n  " + question);
+    	questionField.setText(null);
+    }
+
+/** 
+ * saveConversation() saves the conversation to a file of user's choice.
+ *
+ * @param conversation -- a JTextArea where questions and answers are displayed
+ */
+    private void saveConversation (JTextArea conversation) 
+    {
+    	try {
+    	JFileChooser chooser = new JFileChooser();
+    	File currentDirectory = new File (".");
+    	String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(Calendar.getInstance().getTime());
+    	chooser.setSelectedFile(new File(currentDirectory.getAbsolutePath() + "/" + timeStamp + ".txt"));
+    	chooser.showSaveDialog(this);
+    	String name = chooser.getSelectedFile().toString();
+
+    	File fileName = new File(name);
+	    // by setting the file writer boolean to "true" append is turned on
+		FileWriter outStream =  new FileWriter (fileName, true);
+		outStream.append ("\n\n" + conversation.getText());
+		outStream.close ();
+		JOptionPane.showMessageDialog (null, "Your conversation has been saved.");
+		conversation.setText("Hello. I'm the concierge.");
+		questionField.setText(null);
+	    questionField.requestFocusInWindow();
+		}
+		catch (IOException e) 
+          {
+               conversation.setText("IOERROR: " + e.getMessage() + "\n");
+               e.printStackTrace();
+          }
     }
 
 /**
-     *  The method actionPerformed() handles clicks on the read or write buttons
+     *  The method actionPerformed() handles input from the question field
      */
     public void actionPerformed (ActionEvent evt) 
     {
     	String question = questionField.getText();
   
-        if (evt.getSource() == questionField) 
+        if (evt.getSource() == questionField) // and (or) a questionButton
         {
             displayQuestion (conversation, question); 
         }
+	    if (evt.getSource() == saveButton)
+	    {
+	    	saveConversation(conversation);
+	    }
     }
 
 /**
