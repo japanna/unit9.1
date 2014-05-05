@@ -13,8 +13,9 @@ import java.io.*;                    // File I/O
 import java.awt.event.*;             // ActionListener, etc.
 import java.util.*;                  // Scanner class
 import java.text.*;					// date
+import java.awt.print.*;			// Print functions 
 
-public class Sage01 extends JFrame implements ActionListener
+public class Sage01 extends JFrame implements ActionListener, Printable
 {
 	// question area
 	private JPanel questionArea = new JPanel(); // commands
@@ -26,12 +27,13 @@ public class Sage01 extends JFrame implements ActionListener
 	private JTextArea conversation = //display
          new JTextArea("Hello. I'm the concierge.");
     
-    // save area
-    private JPanel saveArea = new JPanel();
-    private JLabel saveLabel = // prompt
-         new JLabel ("Click button to save conversation:", JLabel.RIGHT);
-    private JButton  saveButton = // readButton
-         new JButton ("Save");  
+    // print area
+    private JPanel printArea = new JPanel();
+    private JButton  printButton = 
+         new JButton ("Print conversation");  
+
+    private Component c;
+
 
 /** 
  * constructor sets up the application's interface.
@@ -52,12 +54,12 @@ public class Sage01 extends JFrame implements ActionListener
         add (new JScrollPane (conversation), BorderLayout.CENTER);
         conversation.setLineWrap (true); 
 
-        // save area
-        add (saveArea, BorderLayout.SOUTH);
-        saveArea.add(saveLabel);
-        saveArea.add (saveButton);
-    	saveButton.addActionListener (this);
-        saveButton.setForeground (Color.GREEN.darker().darker());
+        // save/print area
+        add (printArea, BorderLayout.SOUTH);
+
+        printArea.add(printButton);
+        printButton.addActionListener (this);
+        printButton.setForeground (Color.BLUE.darker());
         
         //readButton.setIcon ( new ImageIcon ("happyFace.gif"));
         //Font f = new Font ("Helvetica", Font.BOLD, 30);
@@ -82,40 +84,67 @@ public class Sage01 extends JFrame implements ActionListener
     }
 
 /** 
- * saveConversation() saves the conversation to a file of user's choice.
+ * printConversation() prints the conversation to a printer of user's choice.
+ * It also saves the conversation to a log (conversationLog.txt)
  *
  * @param conversation -- a JTextArea where questions and answers are displayed
  */
-    private void saveConversation (JTextArea conversation) 
+    private void printConversation (JTextArea conversation) throws PrinterException
     {
     	try {
-    	JFileChooser chooser = new JFileChooser();
-    	File currentDirectory = new File (".");
     	String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(Calendar.getInstance().getTime());
-    	chooser.setSelectedFile(new File(currentDirectory.getAbsolutePath() + "/" + timeStamp + ".txt"));
-    	chooser.showSaveDialog(this);
-    	String name = chooser.getSelectedFile().toString();
-
-    	File fileName = new File(name);
-	    // by setting the file writer boolean to "true" append is turned on
-		FileWriter outStream =  new FileWriter (fileName, true);
-		outStream.append ("\n\n" + conversation.getText());
+	    conversation.append("\n\nDate_Time: " + timeStamp + "\n--------------------------");
+	    conversation.print();
+	    //save conversation to a log
+		File fileName = new File("conversationLog.txt");
+	    FileWriter outStream =  new FileWriter (fileName, true);
+	    
+		outStream.append ("\n" + conversation.getText() + "\n");
 		outStream.close ();
-		JOptionPane.showMessageDialog (null, "Your conversation has been saved.");
+		// reset all fields
 		conversation.setText("Hello. I'm the concierge.");
 		questionField.setText(null);
-	    questionField.requestFocusInWindow();
+		questionField.requestFocusInWindow();   
 		}
 		catch (IOException e) 
-          {
-               conversation.setText("IOERROR: " + e.getMessage() + "\n");
-               e.printStackTrace();
-          }
+         {
+            conversation.append("\n\nIOERROR: " + e.getMessage() + "\n");
+            e.printStackTrace();
+         }
     }
 
 /**
-     *  The method actionPerformed() handles input from the question field
-     */
+   * This is the "callback" method that the PrinterJob will invoke.
+   * This method is defined by the Printable interface.
+   */
+  public int print(Graphics g, PageFormat format, int pagenum) {
+    // The PrinterJob will keep trying to print pages until we return
+    // this value to tell it that it has reached the end
+    if (pagenum > 0) 
+      return Printable.NO_SUCH_PAGE;
+
+    // We're passed a Graphics object, but it can always be cast to Graphics2D
+    Graphics2D g2 = (Graphics2D) g;
+
+    // Use the top and left margins specified in the PageFormat Note
+    // that the PageFormat methods are poorly named.  They specify
+    // margins, not the actual imageable area of the printer.
+    g2.translate(format.getImageableX(), format.getImageableY());
+
+    // Tell the Component to draw itself to the printer by passing in 
+    // the Graphics2D object.  This will not work well if the Component
+    // has double-buffering enabled.
+    c.paint(g2);
+
+    // Return this constant to tell the PrinterJob that we printed the page
+    return Printable.PAGE_EXISTS;
+  }
+
+
+/**
+ *  The method actionPerformed() handles input from the question field
+ *	and the button clicks.
+ */
     public void actionPerformed (ActionEvent evt) 
     {
     	String question = questionField.getText();
@@ -124,9 +153,13 @@ public class Sage01 extends JFrame implements ActionListener
         {
             displayQuestion (conversation, question); 
         }
-	    if (evt.getSource() == saveButton)
+	    if (evt.getSource() == printButton)
 	    {
-	    	saveConversation(conversation);
+	    	try
+	    	{
+	    		printConversation(conversation);
+	    	}
+	    	catch (PrinterException e) {}
 	    }
     }
 
