@@ -14,6 +14,10 @@ import java.awt.event.*;             // ActionListener, etc.
 import java.util.*;                  // Scanner class
 import java.text.*;					// date
 import java.awt.print.*;			// Print functions 
+import java.lang.*;
+import java.util.regex.Pattern;
+import java.util.regex.Matcher;
+
 
 public class Sage01 extends JFrame implements ActionListener, Printable
 {
@@ -33,6 +37,9 @@ public class Sage01 extends JFrame implements ActionListener, Printable
          new JButton ("Print conversation");  
 
     private Component c;
+
+    // stores user's question (a sentence)
+    private String question;
 
 
 /** 
@@ -85,32 +92,54 @@ public class Sage01 extends JFrame implements ActionListener, Printable
 
 /** 
  * printConversation() prints the conversation to a printer of user's choice.
- * It also saves the conversation to a log (conversationLog.txt)
  *
  * @param conversation -- a JTextArea where questions and answers are displayed
  */
     private void printConversation (JTextArea conversation) throws PrinterException
     {
-    	try {
-    	String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(Calendar.getInstance().getTime());
-	    conversation.append("\n\nDate_Time: " + timeStamp + "\n--------------------------");
-	    conversation.print();
-	    //save conversation to a log
-		File fileName = new File("conversationLog.txt");
-	    FileWriter outStream =  new FileWriter (fileName, true);
-	    
-		outStream.append ("\n" + conversation.getText() + "\n");
-		outStream.close ();
-		// reset all fields
-		conversation.setText("Hello. I'm the concierge.");
-		questionField.setText(null);
-		questionField.requestFocusInWindow();   
-		}
-		catch (IOException e) 
-         {
+    	conversation.print();
+        conversation.append("\n\nThis conversation is printing..."); // add check for printing error
+        questionField.requestFocusInWindow(); 
+    }
+
+/** 
+ * saveLogConversation() saves the conversation to a log (conversationLog.txt)
+ *
+ * @param conversation -- a JTextArea where questions and answers are displayed
+ */
+    private void saveLogConversation (JTextArea conversation) 
+    {
+        try { 
+            String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(Calendar.getInstance().getTime());
+        conversation.append("\n\nDate_Time: " + timeStamp + "\n--------------------------");
+        
+            //save conversation to a log
+            File fileName = new File("conversationLog.txt");
+            FileWriter outStream =  new FileWriter (fileName, true);
+        
+            outStream.append ("\n" + conversation.getText() + "\n");
+            outStream.close ();
+        } 
+        catch (IOException e) 
+        {
             conversation.append("\n\nIOERROR: " + e.getMessage() + "\n");
             e.printStackTrace();
-         }
+        }  
+    }
+
+/** 
+ * resetConversation() resets the JTextArea after user has typed "bye"
+ *
+ * @param conversation -- a JTextArea where questions and answers are displayed
+ */
+
+    private void resetConversation (JTextArea conversation) 
+    {
+
+        conversation.setText("Hello. I'm the concierge.");
+        questionField.setText(null);
+        questionField.requestFocusInWindow();
+    
     }
 
 /**
@@ -140,18 +169,91 @@ public class Sage01 extends JFrame implements ActionListener, Printable
     return Printable.PAGE_EXISTS;
   }
 
+/** 
+ * transformQuestion() takes a sentence and looks for certain key words ("I", "you".)
+ * It switches the point of view from the user's to the computer's.
+ *
+ * @param question -- string representing user's last question
+ */
+
+    private void transformQuestion (String question) 
+    {
+        // new hash map of key words
+        Map<String,String> tokens = new HashMap<String,String>();
+        tokens.put("me", "you");
+        tokens.put("i", "you");
+        tokens.put("my", "your");
+        tokens.put("you", "I");
+        tokens.put("your", "my");
+
+        // Build a string of the above key words
+        StringBuilder builder = new StringBuilder();
+        for(String s : tokens.keySet()){
+            builder.append(s).append("\\b|\\b");   
+        }
+        // remove the last "or"
+        builder.deleteCharAt(builder.lastIndexOf("|"));
+        // convert into regex String
+        String patternString = "(\\b" + builder.toString() + ")";
+        System.out.println(patternString);
+
+        // compile the regular expression into a pattern
+        Pattern pattern = Pattern.compile(patternString, Pattern.CASE_INSENSITIVE);
+        // create a matcher from the pattern and the question
+        Matcher matcher = pattern.matcher(question);
+
+        // assemble the transformed question
+        StringBuffer sb = new StringBuffer();
+        // scan the question, look for key words, replace key word with corresponding
+        // replacement word
+        while(matcher.find()) {
+            matcher.appendReplacement(sb, tokens.get(matcher.group(1)));
+        }
+        matcher.appendTail(sb);
+
+System.out.println(sb.toString());
+      /*  String[] words = question.split("\\s+");
+        System.out.println(Arrays.toString(words));
+        for (int i = 0; i < words.length; i++) {
+            words[i] = words[i].replaceAll("[\\W]", "");
+            words[i] = words[i].replaceAll("I", "you");
+            words[i] = words[i].replaceAll("me", "you");
+
+        }
+        StringBuilder builder = new StringBuilder();
+        for(String s : words) {
+            if (!s.equals(""))
+        builder.append(" " + s);
+}
+        String s = builder.toString();
+        System.out.println(s); */
+    }
 
 /**
  *  The method actionPerformed() handles input from the question field
- *	and the button clicks.
+ *	and the "print" button.
  */
     public void actionPerformed (ActionEvent evt) 
     {
-    	String question = questionField.getText();
-  
         if (evt.getSource() == questionField) // and (or) a questionButton
         {
-            displayQuestion (conversation, question); 
+            // stores the question string
+            question = questionField.getText();
+            // if user chooses to quit
+            if (question.equals("bye")) 
+            {
+                // save the conversation to the log
+                saveLogConversation(conversation);
+                // reset all fields
+                resetConversation(conversation);
+            }
+            else 
+            {
+                // display the question in the JTextArea
+                displayQuestion (conversation, question); 
+                // transform the question to conciegge's "point of view"
+                transformQuestion(question.toLowerCase());
+            }
         }
 	    if (evt.getSource() == printButton)
 	    {
