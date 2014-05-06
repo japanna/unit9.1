@@ -67,15 +67,6 @@ public class Sage01 extends JFrame implements ActionListener, Printable
         printArea.add(printButton);
         printButton.addActionListener (this);
         printButton.setForeground (Color.BLUE.darker());
-        
-        //readButton.setIcon ( new ImageIcon ("happyFace.gif"));
-        //Font f = new Font ("Helvetica", Font.BOLD, 30);
-        //saveButton.setFont (f);
-        //askButton.setFont (f);
-        //prompt.setFont (f);
-       	//questionField.setToolTipText ("Type the name of a file that you want to READ or Write!");
-        //questionField.setFont (f);
-        //conversation.setFont (f);
     } 
 
 /** 
@@ -88,6 +79,18 @@ public class Sage01 extends JFrame implements ActionListener, Printable
     {
     	conversation.append("\n\n  " + question);
     	questionField.setText(null);
+    }
+
+/** 
+ * displayAnswer() displays the answer in the conversation field.
+ *
+ * @param answer -- a String representing user's question
+ * @param conversation -- a JTextArea where questions and answers are displayed
+ */
+    private void displayAnswer (JTextArea conversation, String answer) 
+    {
+        conversation.append("\n\n" + answer);
+        questionField.requestFocusInWindow(); 
     }
 
 /** 
@@ -135,11 +138,9 @@ public class Sage01 extends JFrame implements ActionListener, Printable
 
     private void resetConversation (JTextArea conversation) 
     {
-
         conversation.setText("Hello. I'm the concierge.");
         questionField.setText(null);
         questionField.requestFocusInWindow();
-    
     }
 
 /**
@@ -174,59 +175,83 @@ public class Sage01 extends JFrame implements ActionListener, Printable
  * It switches the point of view from the user's to the computer's.
  *
  * @param question -- string representing user's last question
+ * @return transformed question -- the question from the computer's "point of view"
  */
 
-    private void transformQuestion (String question) 
+    private String transformQuestion (String question) 
     {
         // new hash map of key words
-        Map<String,String> tokens = new HashMap<String,String>();
-        tokens.put("me", "you");
-        tokens.put("i", "you");
-        tokens.put("my", "your");
-        tokens.put("you", "I");
-        tokens.put("your", "my");
+        Map<String,String> keyWords = new HashMap<String,String>();
+        keyWords.put("me", "you");
+        keyWords.put("i", "you");
+        keyWords.put("i'm", "you're");
+        keyWords.put("i am", "you're");
+        keyWords.put("im", "you're");
+        keyWords.put("i'd", "you'd");
+        keyWords.put("my", "your");
+        keyWords.put("you", "I");
+        keyWords.put("your", "my");
+        keyWords.put("are you", "am I");
+
 
         // Build a string of the above key words
         StringBuilder builder = new StringBuilder();
-        for(String s : tokens.keySet()){
+        for(String s : keyWords.keySet()){
             builder.append(s).append("\\b|\\b");   
         }
         // remove the last "or"
         builder.deleteCharAt(builder.lastIndexOf("|"));
-        // convert into regex String
+        // convert into regex group string (\\b is "word boundary")
         String patternString = "(\\b" + builder.toString() + ")";
-        System.out.println(patternString);
 
         // compile the regular expression into a pattern
         Pattern pattern = Pattern.compile(patternString, Pattern.CASE_INSENSITIVE);
         // create a matcher from the pattern and the question
         Matcher matcher = pattern.matcher(question);
 
-        // assemble the transformed question
         StringBuffer sb = new StringBuffer();
-        // scan the question, look for key words, replace key word with corresponding
+        // scan the question for key words, replace key word with corresponding
         // replacement word
         while(matcher.find()) {
-            matcher.appendReplacement(sb, tokens.get(matcher.group(1)));
+            matcher.appendReplacement(sb, keyWords.get(matcher.group(1)));
         }
-        matcher.appendTail(sb);
+        return matcher.appendTail(sb).toString();
+    }
 
-System.out.println(sb.toString());
-      /*  String[] words = question.split("\\s+");
-        System.out.println(Arrays.toString(words));
-        for (int i = 0; i < words.length; i++) {
-            words[i] = words[i].replaceAll("[\\W]", "");
-            words[i] = words[i].replaceAll("I", "you");
-            words[i] = words[i].replaceAll("me", "you");
+/** 
+ * generateResponse() takes a question sentence and looks for key words.
+ * It generates a response based on whether the sentence matches a 
+ * predefined pattern.
+ *
+ * @param question -- string representing user's last question
+ * @return response -- string representing a response to question 
+ */
 
+    private void generateResponse (String question) 
+    {
+        // remove all non-word characters except single quote
+        question = question.replaceAll("[\\W&&[^']]", " ");
+        // regex group string
+        String needString = "(.*\\s*)(\\bneed\\b|\\bwant\\b|\\bfind\\b|\\blook\\b|\\blike\\b|\\byou're\\b) (a\\s.+|.+)";
+        Pattern needPattern = Pattern.compile(needString);
+        Matcher needMatcher = needPattern.matcher(question);
+
+        while(needMatcher.find()) {
+        System.out.println("found1: " + needMatcher.group(1) + "\n" +
+                        "found2: "       + needMatcher.group(2) + "\n" +
+                        "found3: "       + needMatcher.group(3));
         }
-        StringBuilder builder = new StringBuilder();
-        for(String s : words) {
-            if (!s.equals(""))
-        builder.append(" " + s);
-}
-        String s = builder.toString();
-        System.out.println(s); */
+
+        //regex group string
+        String whereString = "(\\bwhere\\b) (is\\s.+|.+) (.+)";
+        Pattern wherePattern = Pattern.compile(whereString);
+        Matcher whereMatcher = wherePattern.matcher(question);
+
+        while(whereMatcher.find()) {
+        System.out.println("found1: " + whereMatcher.group(1) + "\n" +
+                        "found2: "       + whereMatcher.group(2) + "\n" +
+                        "found3: "       + whereMatcher.group(3));
+        }
     }
 
 /**
@@ -252,7 +277,10 @@ System.out.println(sb.toString());
                 // display the question in the JTextArea
                 displayQuestion (conversation, question); 
                 // transform the question to conciegge's "point of view"
-                transformQuestion(question.toLowerCase());
+                String newQuestion = transformQuestion(question.toLowerCase());
+                // generate an answer
+                generateResponse (newQuestion);
+                //displayAnswer(conversation, newQuestion);
             }
         }
 	    if (evt.getSource() == printButton)
