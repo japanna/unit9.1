@@ -29,7 +29,7 @@ public class Sage01 extends JFrame implements ActionListener, Printable
 
     // conversation area
 	private JTextArea conversation = //display
-         new JTextArea("Hello. I'm the concierge.");
+         new JTextArea("Hello. I'm your concierge, Mario Nintendino!\n\nPlease ask me anything about Rome!");
     
     // print area
     private JPanel printArea = new JPanel();
@@ -90,6 +90,7 @@ public class Sage01 extends JFrame implements ActionListener, Printable
     private void displayAnswer (JTextArea conversation, String answer) 
     {
         conversation.append("\n\n" + answer);
+        questionField.setText(null);
         questionField.requestFocusInWindow(); 
     }
 
@@ -192,6 +193,7 @@ public class Sage01 extends JFrame implements ActionListener, Printable
         keyWords.put("you", "I");
         keyWords.put("your", "my");
         keyWords.put("are you", "am I");
+        //keyWords.put("a", "the");
 
 
         // Build a string of the above key words
@@ -219,7 +221,7 @@ public class Sage01 extends JFrame implements ActionListener, Printable
     }
 
 /** 
- * generateResponse() takes a question sentence and looks for key words.
+ * generalResponse() takes a question sentence and looks for key words.
  * It generates a response based on whether the sentence matches a 
  * predefined pattern.
  *
@@ -227,30 +229,121 @@ public class Sage01 extends JFrame implements ActionListener, Printable
  * @return response -- string representing a response to question 
  */
 
-    private void generateResponse (String question) 
+    private void generalResponse (String question) 
     {
         // remove all non-word characters except single quote
-        question = question.replaceAll("[\\W&&[^']]", " ");
-        // regex group string
-        String needString = "(.*\\s*)(\\bneed\\b|\\bwant\\b|\\bfind\\b|\\blook\\b|\\blike\\b|\\byou're\\b) (a\\s.+|.+)";
+        question = question.replaceAll("[\\W&&[^']&&[^\\s]]", "");
+        
+        // remove "please"
+        question = question.replaceAll("please|sorry|no|yes", "");
+
+        String [] test = {"hello", "horse", "house"};
+        // Build a string of the above key words
+        StringBuilder builder = new StringBuilder();
+        for(String s : test){
+            builder.append(s).append("\\b|\\b");   
+        }
+        // remove the last "or"
+        builder.deleteCharAt(builder.lastIndexOf("|"));
+        // convert into regex group string (\\b is "word boundary")
+        String needString = "(\\b" + builder.toString() + ")";
+
+        // create regex group string for all questions of "I need" or "i want"-type
+        //String needString = "(.*\\s*)(\\bneed\\b|\\bwant\\b|\\bfind\\b|\\blook\\b|\\blike\\b|\\byou're\\b|\\bbuy\\b|\\bwhere\\b) (a\\s.+|.+)";
         Pattern needPattern = Pattern.compile(needString);
         Matcher needMatcher = needPattern.matcher(question);
 
-        while(needMatcher.find()) {
-        System.out.println("found1: " + needMatcher.group(1) + "\n" +
-                        "found2: "       + needMatcher.group(2) + "\n" +
-                        "found3: "       + needMatcher.group(3));
+        String[] deconstructedAnswer = new String[3];
+        // if the question matechs any pattern, store the different parts in an array
+        /*while(needMatcher.find()) {
+            deconstructedAnswer[0] = needMatcher.group(1);
+            deconstructedAnswer[1] = needMatcher.group(2);
+            deconstructedAnswer[2] = needMatcher.group(3);
         }
 
-        //regex group string
+        // create regex group string for all questions of "where is"-type
         String whereString = "(\\bwhere\\b) (is\\s.+|.+) (.+)";
         Pattern wherePattern = Pattern.compile(whereString);
         Matcher whereMatcher = wherePattern.matcher(question);
 
+        // if the question matechs any pattern, store the different parts in an array
         while(whereMatcher.find()) {
-        System.out.println("found1: " + whereMatcher.group(1) + "\n" +
-                        "found2: "       + whereMatcher.group(2) + "\n" +
-                        "found3: "       + whereMatcher.group(3));
+            deconstructedAnswer[0] = whereMatcher.group(1);
+            deconstructedAnswer[1] = whereMatcher.group(2);
+            deconstructedAnswer[2] = whereMatcher.group(3);
+        }
+
+
+        // make string for display of rephrased question
+        StringBuilder builder = new StringBuilder();
+        for (String s : deconstructedAnswer) {
+                if (s != null) builder.append(" " + s);
+        }
+
+        System.out.println(Arrays.toString(deconstructedAnswer));
+        // if we've found some matching key words, display a response (a rephrasing of the question)
+        if(builder.length() > 0) {*/
+        if (needMatcher.find()) {
+            displayAnswer(conversation, question + ". Let me see..."); 
+            specificResponse(question);
+        }
+        // if not, ask for more information by displaying a general response
+        else {
+            final String[] generalAnswers1 = {"Can you tell me more?", "Can you elaborate on that?", 
+                                            "I'm afraid I'm at a loss. How do you mean?", 
+                                            "I'm interested, can you explain in more detail?", 
+                                            "I'd love to help, can you phrase your question differently?"};
+            int rand = (int) (Math.random() * 5);
+            System.out.println(rand);
+            String s = generalAnswers1[rand];
+            displayAnswer(conversation, question + "? " + s);
+        }
+        // return array containing the question in a broken down state
+        
+    }
+
+/** 
+ * specificResponse() takes a string and looks for key words.
+ * It generates a response based on whether the sentence matches a 
+ * predefined pattern.
+ *
+ * @param question -- string representing the relevant part of user's last question
+ * @return response -- string representing a response to question 
+ */
+
+    private void specificResponse (String noun) 
+    {
+        // new hash map of key words
+        Map<String,String> keyWords = new HashMap<String,String>();
+        keyWords.put("restaurant", "You may want to eat at \"Tutti di Mare\" on Via Veneto 14, 11432 Rome.\nStay away from the squid though. It's disgustoso!");
+        keyWords.put("museum", "The Sistine Chapel is marvellous. It's on Viale Vaticano, 2, Vatican City.\nBe sure to see the bathrooms! They're divine!");
+        keyWords.put("taxi", "For a cab, please call +39 444 3232. Ask for Luigi, he has the license!");
+        keyWords.put("cab", "For a cab, please call +39 444 3232.\nDon't ride with Luigi! He just got out of jail.");
+        keyWords.put("food", "\"Gelato Maximus\" is deliziozo! It's on Via Spiga 22, 11232 Rome.\nMake sure you get the clean spoon!");
+        keyWords.put("hotel", "\"The Shangri La\" is bellissimo! It's on Via Trevi 8, 11232 Rome.\nJust don't flirt with the bartender - pazzesco!");
+
+        // Build a string of the above key words
+        StringBuilder builder = new StringBuilder();
+        for(String s : keyWords.keySet()){
+            builder.append(s).append("\\b|\\b");   
+        }
+        // remove the last "or"
+        builder.deleteCharAt(builder.lastIndexOf("|"));
+        // convert into regex group string (\\b is "word boundary")
+        String patternString = "(\\b" + builder.toString() + ")";
+
+        // compile the regular expression into a pattern
+        Pattern pattern = Pattern.compile(patternString, Pattern.CASE_INSENSITIVE);
+        // create a matcher from the pattern and the question
+        Matcher matcher = pattern.matcher(noun);
+
+        // scan the question for key words, replace key word with corresponding
+        // replacement word
+        if (matcher.find()) {
+            displayAnswer(conversation, keyWords.get(matcher.group(1))); 
+        }
+        else {
+            displayAnswer(conversation, "Scusa, my English is piccolo. Can you say it di nuovo?"); 
         }
     }
 
@@ -275,12 +368,14 @@ public class Sage01 extends JFrame implements ActionListener, Printable
             else 
             {
                 // display the question in the JTextArea
-                displayQuestion (conversation, question); 
+                //displayQuestion (conversation, question); 
                 // transform the question to conciegge's "point of view"
                 String newQuestion = transformQuestion(question.toLowerCase());
                 // generate an answer
-                generateResponse (newQuestion);
-                //displayAnswer(conversation, newQuestion);
+                generalResponse (newQuestion);
+                
+                //displayAnswer(conversation, Arrays.toString(deconstructedAnswer));
+                //
             }
         }
 	    if (evt.getSource() == printButton)
