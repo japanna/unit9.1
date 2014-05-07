@@ -23,31 +23,37 @@ import au.com.bytecode.opencsv.CSVReader;
 
 public class Sage01 extends JFrame implements ActionListener, Printable
 {
+    private static final String GREETING = "\n                   Welcome to Rome!  I'm your concierge, Signore Mario. (◕‿◕)ﾉ\n\n                   How can I help you?  I'm an expert on food, sights and love!\n                  ___________________________________________________________";
+
 	// question area
-	private JPanel questionArea = new JPanel(); // commands
-	private JLabel prompt = // prompt
-         new JLabel ("Please type your question here:", JLabel.RIGHT);
-    private JTextField questionField = new JTextField (30); // nameField
+	private JPanel questionArea = new JPanel(); 
+	private JLabel prompt =  new JLabel ("Please type your question here:", JLabel.RIGHT);
+    private JTextField questionField = new JTextField (30); 
 
     // conversation area
-	private JTextArea conversation = //display
-         new JTextArea("Hello. I'm your concierge, Mario Nintendino!\n\nPlease ask me anything about Rome!");
+	private JTextArea conversation = new JTextArea(GREETING);
     
     // print area
     private JPanel printArea = new JPanel();
     private JButton  printButton = 
-         new JButton ("Print conversation");  
+    new JButton ("Print conversation");  
 
+    // graphics component used to print the conversation
     private Component c;
 
-    // stores user's question (a sentence)
+    // stores user's latest question 
     private String question;
 
+    // a string representing a group of keywords used in pattern matching, built from a CSV file
+    private String csvString;
 
 /** 
- * constructor sets up the application's interface.
+ * constructor sets up the application's interface and 
+ * builds a string of keywords from a CSV file.
+ * The keywords in the string are used in pattern matching in 
+ * the functions generalResponse() and specificResponse()
  */
-    public Sage01() 
+    public Sage01() throws FileNotFoundException, IOException
     {        
     	super ("Sage ver. 01");  
     	setLayout (new BorderLayout ());      
@@ -59,29 +65,37 @@ public class Sage01 extends JFrame implements ActionListener, Printable
         questionField.addActionListener(this);
 
     	// conversation area
-    	//instead of ...  add (display, BorderLayout.CENTER);
         add (new JScrollPane (conversation), BorderLayout.CENTER);
         conversation.setLineWrap (true); 
+        
 
-        // save/print area
+        // print area
         add (printArea, BorderLayout.SOUTH);
 
         printArea.add(printButton);
         printButton.addActionListener (this);
         printButton.setForeground (Color.BLUE.darker());
+
+        // openCSV object, creates a reader out of a CSV file
+        CSVReader reader = new CSVReader(new FileReader("rome.csv"));
+
+        // a temporary object used to build a string of keywords from CSV file
+        StringBuilder temp = new StringBuilder();
+        String [] nextLine; 
+
+        // create a string of keywords from CSV file to be put in a regex group 
+        while ((nextLine = reader.readNext()) != null) 
+        {
+            // append every keyword from the CSV file to a "word boundary" regex
+            temp.append(nextLine[0]).append("\\b|\\b");  
+        }
+        
+        // remove the last "or"
+        temp.deleteCharAt(temp.lastIndexOf("|"));
+        // add parentheses to form a group regex (see )
+        csvString = "(\\b" + temp.toString() + ")";
     } 
 
-/** 
- * displayQuestion() displays the question in the conversation field.
- *
- * @param question -- a String representing user's question
- * @param conversation -- a JTextArea where questions and answers are displayed
- */
-    private void displayQuestion (JTextArea conversation, String question) 
-    {
-    	conversation.append("\n\n  " + question);
-    	questionField.setText(null);
-    }
 
 /** 
  * displayAnswer() displays the answer in the conversation field.
@@ -110,6 +124,7 @@ public class Sage01 extends JFrame implements ActionListener, Printable
 
 /** 
  * saveLogConversation() saves the conversation to a log (conversationLog.txt)
+ * when the user ends the conversation (or prints?)
  *
  * @param conversation -- a JTextArea where questions and answers are displayed
  */
@@ -117,7 +132,7 @@ public class Sage01 extends JFrame implements ActionListener, Printable
     {
         try { 
             String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(Calendar.getInstance().getTime());
-        conversation.append("\n\nDate_Time: " + timeStamp + "\n--------------------------");
+            conversation.append("\n\nDate_Time: " + timeStamp + "\n--------------------------");
         
             //save conversation to a log
             File fileName = new File("conversationLog.txt");
@@ -141,7 +156,7 @@ public class Sage01 extends JFrame implements ActionListener, Printable
 
     private void resetConversation (JTextArea conversation) 
     {
-        conversation.setText("Hello. I'm the concierge.");
+        conversation.setText(GREETING);
         questionField.setText(null);
         questionField.requestFocusInWindow();
     }
@@ -181,22 +196,22 @@ public class Sage01 extends JFrame implements ActionListener, Printable
  * @return transformed question -- the question from the computer's "point of view"
  */
 
-    private String transformQuestion (String question) 
+    private String transformQuestion (String question) throws IOException, FileNotFoundException 
     {
         // new hash map of key words
         Map<String,String> keyWords = new HashMap<String,String>();
-        keyWords.put("me", "you");
-        keyWords.put("i", "you");
-        keyWords.put("i'm", "you're");
-        keyWords.put("i am", "you're");
-        keyWords.put("im", "you're");
-        keyWords.put("i'd", "you'd");
-        keyWords.put("my", "your");
-        keyWords.put("you", "I");
-        keyWords.put("your", "my");
-        keyWords.put("are you", "am I");
-        //keyWords.put("a", "the");
 
+        // openCSV object, creates a reader out of a CSV file containing "point of view" substitutes
+        CSVReader reader = new CSVReader(new FileReader("pointOfView.csv"));
+
+        
+        String [] nextLine; 
+
+        // create a string of keywords from CSV file to be put in a regex group 
+        while ((nextLine = reader.readNext()) != null) 
+        {
+            keyWords.put(nextLine[0], (String)nextLine[1]);  
+        }
 
         // Build a string of the above key words
         StringBuilder builder = new StringBuilder();
@@ -205,11 +220,13 @@ public class Sage01 extends JFrame implements ActionListener, Printable
         }
         // remove the last "or"
         builder.deleteCharAt(builder.lastIndexOf("|"));
+
         // convert into regex group string (\\b is "word boundary")
         String patternString = "(\\b" + builder.toString() + ")";
 
         // compile the regular expression into a pattern
         Pattern pattern = Pattern.compile(patternString, Pattern.CASE_INSENSITIVE);
+
         // create a matcher from the pattern and the question
         Matcher matcher = pattern.matcher(question);
 
@@ -233,86 +250,35 @@ public class Sage01 extends JFrame implements ActionListener, Printable
 
     private void generalResponse (String question) throws IOException 
     {
-        // Read 
-        CSVReader reader = new CSVReader(new FileReader("keyWords.csv"));
-        String [] nextLine;
-        StringBuilder builder = new StringBuilder();
-        while ((nextLine = reader.readNext()) != null) {
-            builder.append(nextLine[0]).append("\\b|\\b");  
-            
-        }
-
-
         // remove all non-word characters except single quote
         question = question.replaceAll("[\\W&&[^']&&[^\\s]]", "");
         
         // remove "please"
-        question = question.replaceAll("please|sorry|no|yes", "");
+        question = question.replaceAll("please|sorry", "");
 
-        String [] test = {"hello", "horse", "house"};
-        // Build a string of the above key words
-       /* StringBuilder builder = new StringBuilder();
-        for(String s : test){
-            builder.append(s).append("\\b|\\b");   
-        }*/
-        // remove the last "or"
-        builder.deleteCharAt(builder.lastIndexOf("|"));
-        // convert into regex group string (\\b is "word boundary")
-        String needString = "(\\b" + builder.toString() + ")";
-        System.out.println(needString);
+        Pattern generalPattern = Pattern.compile(csvString);
+        Matcher generalMatcher = generalPattern.matcher(question);
 
-        // create regex group string for all questions of "I need" or "i want"-type
-        //String needString = "(.*\\s*)(\\bneed\\b|\\bwant\\b|\\bfind\\b|\\blook\\b|\\blike\\b|\\byou're\\b|\\bbuy\\b|\\bwhere\\b) (a\\s.+|.+)";
-        Pattern needPattern = Pattern.compile(needString);
-        Matcher needMatcher = needPattern.matcher(question);
-
-        //String[] deconstructedAnswer = new String[3];
-        // if the question matechs any pattern, store the different parts in an array
-        /*while(needMatcher.find()) {
-            deconstructedAnswer[0] = needMatcher.group(1);
-            deconstructedAnswer[1] = needMatcher.group(2);
-            deconstructedAnswer[2] = needMatcher.group(3);
-        }
-
-        // create regex group string for all questions of "where is"-type
-        String whereString = "(\\bwhere\\b) (is\\s.+|.+) (.+)";
-        Pattern wherePattern = Pattern.compile(whereString);
-        Matcher whereMatcher = wherePattern.matcher(question);
-
-        // if the question matechs any pattern, store the different parts in an array
-        while(whereMatcher.find()) {
-            deconstructedAnswer[0] = whereMatcher.group(1);
-            deconstructedAnswer[1] = whereMatcher.group(2);
-            deconstructedAnswer[2] = whereMatcher.group(3);
-        }
-
-
-        // make string for display of rephrased question
-        StringBuilder builder = new StringBuilder();
-        for (String s : deconstructedAnswer) {
-                if (s != null) builder.append(" " + s);
-        }
-
-        System.out.println(Arrays.toString(deconstructedAnswer));
         // if we've found some matching key words, display a response (a rephrasing of the question)
-        if(builder.length() > 0) {*/
-        if (needMatcher.find()) {
-            displayAnswer(conversation, question + ". Let me see..."); 
+        if (generalMatcher.find()) {
+            displayAnswer(conversation, "  " + question + "? Let me see..."); 
             specificResponse(question);
         }
         // if not, ask for more information by displaying a general response
         else {
-            final String[] generalAnswers1 = {"Can you tell me more?", "Can you elaborate on that?", 
-                                            "I'm afraid I'm at a loss. How do you mean?", 
-                                            "I'm interested, can you explain in more detail?", 
-                                            "I'd love to help, can you phrase your question differently?"};
-            int rand = (int) (Math.random() * 5);
+            final String[] generalAnswers1 = {"Pazzo! Why you say that?", 
+                                            "Sono confuso... Can you elaborate?", 
+                                            "Cosa! How do you mean?", 
+                                            "Non capisco. Can you explain?", 
+                                            "Caro mio, please rephrase that.",
+                                            "Nobody likes that. Qualcos'altro?",
+                                            "Dio mio! Not in Rome! What else?",
+                                            "Offeso! Go to Paris for that!"};
+            int rand = (int) (Math.random() * 7);
             System.out.println(rand);
             String s = generalAnswers1[rand];
-            displayAnswer(conversation, question + "? " + s);
+            displayAnswer(conversation, "  " + question + "? " + s);
         }
-        // return array containing the question in a broken down state
-        
     }
 
 /** 
@@ -324,17 +290,33 @@ public class Sage01 extends JFrame implements ActionListener, Printable
  * @return response -- string representing a response to question 
  */
 
-    private void specificResponse (String noun) 
+    private void specificResponse (String noun) throws IOException, FileNotFoundException 
     {
         // new hash map of key words
         Map<String,String> keyWords = new HashMap<String,String>();
-        keyWords.put("restaurant", "You may want to eat at \"Tutti di Mare\" on Via Veneto 14, 11432 Rome.\nStay away from the squid though. It's disgustoso!");
+        // openCSV object, creates a reader out of a CSV file
+        CSVReader reader = new CSVReader(new FileReader("rome.csv"));
+
+        
+        String [] nextLine; 
+
+        // create a string of keywords from CSV file to be put in a regex group 
+        while ((nextLine = reader.readNext()) != null) 
+        {
+            System.out.println(Arrays.toString(nextLine));
+            
+            keyWords.put(nextLine[0], (String)nextLine[1]);  
+        }
+        
+/* 
+       
+        keyWords.put("restaurant", "You may want to eat at \"Tutti di Mare\" on Via Veneto 14, 11432 Rome.\nStay away from the squid! It's disgustoso!");
         keyWords.put("museum", "The Sistine Chapel is marvellous. It's on Viale Vaticano, 2, Vatican City.\nBe sure to see the bathrooms! They're divine!");
         keyWords.put("taxi", "For a cab, please call +39 444 3232. Ask for Luigi, he has the license!");
         keyWords.put("cab", "For a cab, please call +39 444 3232.\nDon't ride with Luigi! He just got out of jail.");
         keyWords.put("food", "\"Gelato Maximus\" is deliziozo! It's on Via Spiga 22, 11232 Rome.\nMake sure you get the clean spoon!");
         keyWords.put("hotel", "\"The Shangri La\" is bellissimo! It's on Via Trevi 8, 11232 Rome.\nJust don't flirt with the bartender - pazzesco!");
-
+   */ System.out.println(keyWords.toString());
         // Build a string of the above key words
         StringBuilder builder = new StringBuilder();
         for(String s : keyWords.keySet()){
@@ -352,11 +334,8 @@ public class Sage01 extends JFrame implements ActionListener, Printable
 
         // scan the question for key words, replace key word with corresponding
         // replacement word
-        if (matcher.find()) {
+        while(matcher.find()) {
             displayAnswer(conversation, keyWords.get(matcher.group(1))); 
-        }
-        else {
-            displayAnswer(conversation, "Scusa, my English is piccolo. Can you say it di nuovo?"); 
         }
     }
 
@@ -380,13 +359,16 @@ public class Sage01 extends JFrame implements ActionListener, Printable
             }
             else 
             {
-                // display the question in the JTextArea
-                //displayQuestion (conversation, question); 
-                // transform the question to conciegge's "point of view"
+                 try {
+                // transform the question to "concierge's point of view"
                 String newQuestion = transformQuestion(question.toLowerCase());
+
+                // scroll the JTextArea to the end in order to always see the last answer
+                conversation.setCaretPosition(conversation.getText().length());
+
+
                 // generate an answer
-                try
-            {
+                
                 generalResponse (newQuestion);
                 }
                 catch (IOException e) {}
@@ -408,7 +390,7 @@ public class Sage01 extends JFrame implements ActionListener, Printable
 /**
  *  main() creates an instance of this class.
  */
-    public static void main(String args[])
+    public static void main(String args[]) throws FileNotFoundException, IOException
     {
         Sage01 sage = new Sage01 ();
       
