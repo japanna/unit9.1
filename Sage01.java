@@ -17,6 +17,8 @@ import java.awt.print.*;			// Print functions
 import java.lang.*;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
+import au.com.bytecode.opencsv.CSVReader;
+
 
 
 public class Sage01 extends JFrame implements ActionListener, Printable
@@ -229,8 +231,18 @@ public class Sage01 extends JFrame implements ActionListener, Printable
  * @return response -- string representing a response to question 
  */
 
-    private void generalResponse (String question) 
+    private void generalResponse (String question) throws IOException 
     {
+        // Read 
+        CSVReader reader = new CSVReader(new FileReader("keyWords.csv"));
+        String [] nextLine;
+        StringBuilder builder = new StringBuilder();
+        while ((nextLine = reader.readNext()) != null) {
+            builder.append(nextLine[0]).append("\\b|\\b");  
+            
+        }
+
+
         // remove all non-word characters except single quote
         question = question.replaceAll("[\\W&&[^']&&[^\\s]]", "");
         
@@ -239,21 +251,22 @@ public class Sage01 extends JFrame implements ActionListener, Printable
 
         String [] test = {"hello", "horse", "house"};
         // Build a string of the above key words
-        StringBuilder builder = new StringBuilder();
+       /* StringBuilder builder = new StringBuilder();
         for(String s : test){
             builder.append(s).append("\\b|\\b");   
-        }
+        }*/
         // remove the last "or"
         builder.deleteCharAt(builder.lastIndexOf("|"));
         // convert into regex group string (\\b is "word boundary")
         String needString = "(\\b" + builder.toString() + ")";
+        System.out.println(needString);
 
         // create regex group string for all questions of "I need" or "i want"-type
         //String needString = "(.*\\s*)(\\bneed\\b|\\bwant\\b|\\bfind\\b|\\blook\\b|\\blike\\b|\\byou're\\b|\\bbuy\\b|\\bwhere\\b) (a\\s.+|.+)";
         Pattern needPattern = Pattern.compile(needString);
         Matcher needMatcher = needPattern.matcher(question);
 
-        String[] deconstructedAnswer = new String[3];
+        //String[] deconstructedAnswer = new String[3];
         // if the question matechs any pattern, store the different parts in an array
         /*while(needMatcher.find()) {
             deconstructedAnswer[0] = needMatcher.group(1);
@@ -372,8 +385,12 @@ public class Sage01 extends JFrame implements ActionListener, Printable
                 // transform the question to conciegge's "point of view"
                 String newQuestion = transformQuestion(question.toLowerCase());
                 // generate an answer
+                try
+            {
                 generalResponse (newQuestion);
-                
+                }
+                catch (IOException e) {}
+                //catch (ArrayStoreException e) {}
                 //displayAnswer(conversation, Arrays.toString(deconstructedAnswer));
                 //
             }
