@@ -1,5 +1,51 @@
-restaurant,"You may want to eat at ""Tutti di Mare"" on Via Veneto 14, 11432 Rome.
-Stay away from the squid! It's disgustoso!"
+restaurant,What is your favorite cuisine? 
 hotel,"The Shangri La is bellissimo! It's on Via Trevi 8, 11232 Rome.
 Just don't flirt with the bartender - pazzesco!"
 I,Let's not talk about me. What do you want to do?
+food,Naturalmente! What kind of food? Italian? French? Fish?
+seafood,"You may want to eat at ""Tutti di Mare"" on Via Veneto 14, 11432 Rome.
+Stay away from the squid! It's disgustoso!"
+pizza,"You'll love ""La Margherita"". It's on Viale Pazzo 19, 11235 Rome.
+Order the special - tell them Mario sent you!"
+vatican,"Ah! Città del Vaticano! That will be bus no. 3.
+It closes at 3 p.m. so please hurry! "
+spaghetti,"""I Fratellini"" makes the best spaghetti in town. It's on Via Bonzi 1, 11342 Rome."
+pasta,"""I Fratellini"" makes the best spaghetti in town. It's on Via Bonzi 1, 11342 Rome."
+fish,"You may want to eat at ""Tutti di Mare"" on Via Veneto 14, 11432 Rome.
+Stay away from the squid! It's disgustoso!"
+western,"Ah? Hamburger? Go to ""Big Boy"" on Via Grassi 2, 11345 Rome."
+italian,"""Gelato Maximus"" is deliziozo! It's on Via Spiga 22, 11232 Rome.
+Make sure you get the clean spoon!"
+french,"May I suggest ""Sacre Bleu"" on Via Benzo 4, 11231 Rome?"
+vegetarian,"I hear good things about ""Verdura"" on Via Tomato 2, 11367 Rome.
+I not try yet!"
+museum,"The Sistine Chapel is marvellous. It's on Viale Vaticano, 2, Vatican City.
+Be sure to see the bathrooms! They're divine!"
+art,"For art, visit MAXXI. It's on Via Corso 22, 11345 Rome.
+It's designed by the architect Saha Hadid!"
+cab,"For a cab, please call +39 444 3232.
+Don't ride with Luigi! He just got out of jail."
+taxi,"For a cab, please call +39 444 3232.
+Ask for Luigi. He has the driver's license."
+bus,Bus? Don't be silly. Rome is a walking city!
+metro,Metro? But you miss all the sights!
+subway,Pazzo! You must walk my city!
+train,"If you must? The railway station is on Via Fazzo 24, 11343 Rome.
+Don't get mugged!"
+coliseum,Excellent question! It's on Via Gonzo - you can't miss it!
+colosseum,Excellent question! It's on Via Gonzo - you can't miss it!
+trevi,"Ah! The fountain! Yes, it's on Via Amore 5, 11234 Rome.
+Bella!"
+wine,Naturalmente! You will find vino anywhere. Just take a walk.
+hello,How can I help today?
+hi,Can I help you find anything today?
+thank,You're welcome! Do you need anything else?
+thanks,My pleasure! Anything else I can do for you?
+sorry,No need to apologize! Now: how can I help?
+love,Amore! Go to Trevi Fountain for that!
+man,I'm available! Would you like to join me for dinner?
+women,Please! We're not that kind of place! How about something else?
+woman,Ah! We're not that kind of place. How about a museum?
+rome,The best place in Rome is mia mama's kitchen. What else would you like?
+no,"Sorry to hear. Just say ""bye"" if you like to quit. What else?"
+me ,Let's get back to you. What's your passione?
