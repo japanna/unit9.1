@@ -40,7 +40,7 @@ public class Sage extends JFrame implements ActionListener, Printable
                                             "Caro mio, please rephrase that.",
                                             "Nobody likes that. Qualcos'altro?",
                                             "Dio mio! Not in Rome! What else?",
-                                            "Offeso! Go to Paris for that!\nCan I help you with anything else?"};
+                                            "Offeso! Go to Paris!\nCan I help you with anything else?"};
 
 	// question area
 	private JPanel questionArea = new JPanel(); 
@@ -188,7 +188,7 @@ public class Sage extends JFrame implements ActionListener, Printable
         conversation.setText(GREETING);
         questionField.setText(null);
         questionField.requestFocusInWindow();
-        storedQuestion = "you might need help";
+        storedQuestion = "you had a question for me.";
     }
 
 
@@ -245,8 +245,8 @@ public int print(Graphics g, PageFormat format, int pageIndex)
  *
  * @param question -- string representing user's last question
  * @return transformed question -- the question from the computer's "point of view"
- * @throws IOException
- * @throws FileNotFoundException 
+ * @throws IOException - when CSVreader cannot be read from
+ * @throws FileNotFoundException - when "pointOfView.csv" cannot be found
  */
 
     private String transformQuestion (String question) throws IOException, FileNotFoundException 
@@ -321,7 +321,7 @@ public int print(Graphics g, PageFormat format, int pageIndex)
  * The generic reply is picked at random.
  *
  * @param question -- string representing user's last question
- * @throws IOException
+ * @throws IOException - when specificResponse cannot read from CSVreader
  */
 
     private void generalResponse (String question) throws IOException 
@@ -353,12 +353,12 @@ public int print(Graphics g, PageFormat format, int pageIndex)
             // for a random number between 8 - 11 display a rephrasing of user's previous question
             // but only if that wasn't the question that was just asked
             if ((rand > 7) && (!s.equals(question))) {
-                displayAnswer(conversation, "  Earlier you said " + s + ". Can you tell me why?");
+                displayAnswer(conversation, "  Earlier you said " + s + ". Can you tell me more?");
             }
             // if the stored question is the question that was just asked OR the random number
             // is less than 8 display one of the 7 predefined answers
             else {
-                if (rand > 7) rand = rand - 3;
+                if (rand > 7) rand = rand - 4;
                 s = GENERAL_ANSWERS[rand];
                 displayAnswer(conversation, "  " + question + "? " + s);
             } 
@@ -376,8 +376,8 @@ public int print(Graphics g, PageFormat format, int pageIndex)
  *  displayAnswer() is called to display the corresponding response.
  *
  * @param question -- user's last question
- * @throws IOException
- * @throws FileNotFoundException
+ * @throws IOException - when CSVreader cannot be read from
+ * @throws FileNotFoundException - when "rome.csv" cannot be found
  */
 
     private void specificResponse (String question) throws IOException, FileNotFoundException 

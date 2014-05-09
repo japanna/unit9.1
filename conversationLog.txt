@@ -1,0 +1,23 @@
+
+
+               Welcome to Rome!  I'm your concierge, Signore Mario. (◕‿◕)ﾉ
+
+               How can I help you?  I'm an expert on food, sights and love!
+
+                                                  (Say "bye" to quit)
+              __________________________________________________
+
+  hi...
+
+Can I help you find anything today?
+
+  yes...
+
+I'm glad you answered yes! More details please!
+
+  locomitive? Nobody likes that. Qualcos'altro?
+
+Farewell. Enjoy Roma!
+
+Date_Time: 20140509_161304
+--------------------------
