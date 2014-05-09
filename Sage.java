@@ -130,6 +130,7 @@ public class Sage extends JFrame implements ActionListener, Printable
     } 
 
 
+
 /** 
  * displayAnswer() displays the answer in the conversation field.
  *
@@ -172,9 +173,12 @@ public class Sage extends JFrame implements ActionListener, Printable
         }  
     }
 
+
+
 /** 
  * resetConversation() resets the JTextArea after user has typed "bye".
  * Resets and returns focus to the question field. 
+ * Resets the stored question to its initial state
  *
  * @param conversation -- a JTextArea where questions and answers are displayed
  */
@@ -184,6 +188,7 @@ public class Sage extends JFrame implements ActionListener, Printable
         conversation.setText(GREETING);
         questionField.setText(null);
         questionField.requestFocusInWindow();
+        storedQuestion = "you might need help";
     }
 
 
